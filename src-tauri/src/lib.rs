@@ -19,6 +19,7 @@ fn get_db_path() -> PathBuf {
 // Função para inicializar o banco de dados
 fn init_database() -> Result<(), rusqlite::Error> {
     let db_path = get_db_path();
+    let is_new_database = !db_path.exists();
     let conn = Connection::open(&db_path)?;
     
     // Criar todas as tabelas
@@ -198,39 +199,41 @@ fn init_database() -> Result<(), rusqlite::Error> {
         );
     ")?;
     
-    // Inserir dados iniciais
-    conn.execute_batch("
-        -- Inserir categorias padrão
-        INSERT OR IGNORE INTO categoria_alimento (nome, descricao, cor_hex, icone) VALUES
-        ('Frutas', 'Frutas frescas e secas', '#FF6B6B', '🍎'),
-        ('Vegetais', 'Vegetais e verduras', '#4ECDC4', '🥬'),
-        ('Proteínas', 'Carnes, peixes, ovos e leguminosas', '#45B7D1', '🍖'),
-        ('Grãos', 'Cereais, pães e massas', '#96CEB4', '🌾'),
-        ('Laticínios', 'Leite, queijos e derivados', '#FFEAA7', '🥛'),
-        ('Gorduras', 'Óleos, manteigas e oleaginosas', '#DDA0DD', '🥑'),
-        ('Bebidas', 'Sucos, refrigerantes e bebidas', '#74B9FF', '🥤'),
-        ('Doces', 'Açúcares, chocolates e sobremesas', '#FD79A8', '🍰');
+    // Inserir dados iniciais apenas se for um banco novo
+    if is_new_database {
+        conn.execute_batch("
+            -- Inserir categorias padrão
+            INSERT INTO categoria_alimento (nome, descricao, cor_hex, icone) VALUES
+            ('Frutas', 'Frutas frescas e secas', '#FF6B6B', '🍎'),
+            ('Vegetais', 'Vegetais e verduras', '#4ECDC4', '🥬'),
+            ('Proteínas', 'Carnes, peixes, ovos e leguminosas', '#45B7D1', '🍖'),
+            ('Grãos', 'Cereais, pães e massas', '#96CEB4', '🌾'),
+            ('Laticínios', 'Leite, queijos e derivados', '#FFEAA7', '🥛'),
+            ('Gorduras', 'Óleos, manteigas e oleaginosas', '#DDA0DD', '🥑'),
+            ('Bebidas', 'Sucos, refrigerantes e bebidas', '#74B9FF', '🥤'),
+            ('Doces', 'Açúcares, chocolates e sobremesas', '#FD79A8', '🍰');
 
-        -- Inserir tipos de refeição padrão
-        INSERT OR IGNORE INTO tipo_refeicao (nome, descricao, ordem) VALUES
-        ('Café da Manhã', 'Primeira refeição do dia', 1),
-        ('Lanche da Manhã', 'Lanche entre café e almoço', 2),
-        ('Almoço', 'Refeição principal do meio-dia', 3),
-        ('Lanche da Tarde', 'Lanche entre almoço e jantar', 4),
-        ('Jantar', 'Refeição principal da noite', 5),
-        ('Ceia', 'Lanche noturno', 6);
+            -- Inserir tipos de refeição padrão
+            INSERT INTO tipo_refeicao (nome, descricao, ordem) VALUES
+            ('Café da Manhã', 'Primeira refeição do dia', 1),
+            ('Lanche da Manhã', 'Lanche entre café e almoço', 2),
+            ('Almoço', 'Refeição principal do meio-dia', 3),
+            ('Lanche da Tarde', 'Lanche entre almoço e jantar', 4),
+            ('Jantar', 'Refeição principal da noite', 5),
+            ('Ceia', 'Lanche noturno', 6);
 
-        -- Inserir alguns alimentos padrão
-        INSERT OR IGNORE INTO alimento (nome, categoria_id, unidade, default_value, calorias_por_unidade, proteina_por_unidade, gordura_por_unidade, carboidrato_por_unidade) VALUES
-        ('Arroz branco cozido', 4, 'g', 100, 130, 2.7, 0.3, 28),
-        ('Feijão carioca cozido', 3, 'g', 100, 76, 4.8, 0.5, 13.6),
-        ('Peito de frango grelhado', 3, 'g', 100, 165, 31, 3.6, 0),
-        ('Banana', 1, 'unidade', 1, 87, 1.1, 0.3, 22.8),
-        ('Maçã', 1, 'unidade', 1, 52, 0.3, 0.2, 13.8),
-        ('Pão francês', 4, 'unidade', 1, 135, 4.5, 1.2, 26),
-        ('Leite integral', 5, 'ml', 200, 124, 6.4, 6.8, 9.6),
-        ('Ovo de galinha', 3, 'unidade', 1, 70, 6, 5, 0.6);
-    ")?;
+            -- Inserir alguns alimentos padrão
+            INSERT INTO alimento (nome, categoria_id, unidade, default_value, calorias_por_unidade, proteina_por_unidade, gordura_por_unidade, carboidrato_por_unidade) VALUES
+            ('Arroz branco cozido', 4, 'g', 100, 130, 2.7, 0.3, 28),
+            ('Feijão carioca cozido', 3, 'g', 100, 76, 4.8, 0.5, 13.6),
+            ('Peito de frango grelhado', 3, 'g', 100, 165, 31, 3.6, 0),
+            ('Banana', 1, 'unidade', 1, 87, 1.1, 0.3, 22.8),
+            ('Maçã', 1, 'unidade', 1, 52, 0.3, 0.2, 13.8),
+            ('Pão francês', 4, 'unidade', 1, 135, 4.5, 1.2, 26),
+            ('Leite integral', 5, 'ml', 200, 124, 6.4, 6.8, 9.6),
+            ('Ovo de galinha', 3, 'unidade', 1, 70, 6, 5, 0.6);
+        ")?;
+    }
     
     Ok(())
 }
@@ -821,6 +824,72 @@ fn get_meta_ativa_usuario(usuario_id: i64) -> Result<Option<MetaNutricional>, St
     }
 }
 
+// CRUD para Alimentos
+#[tauri::command]
+fn criar_alimento(
+    nome: String,
+    categoria_id: i64,
+    unidade: String,
+    default_value: f64,
+    calorias_por_unidade: f64,
+    proteina_por_unidade: f64,
+    gordura_por_unidade: f64,
+    carboidrato_por_unidade: f64
+) -> Result<i64, String> {
+    let db_path = get_db_path();
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    
+    let mut stmt = conn.prepare(
+        "INSERT INTO alimento (nome, categoria_id, unidade, default_value, calorias_por_unidade, proteina_por_unidade, gordura_por_unidade, carboidrato_por_unidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"
+    ).map_err(|e| e.to_string())?;
+    
+    stmt.execute(rusqlite::params![
+        nome, categoria_id, unidade, default_value, calorias_por_unidade, proteina_por_unidade, gordura_por_unidade, carboidrato_por_unidade
+    ]).map_err(|e| e.to_string())?;
+    
+    Ok(conn.last_insert_rowid())
+}
+
+#[tauri::command]
+fn editar_alimento(
+    id: i64,
+    nome: String,
+    categoria_id: i64,
+    unidade: String,
+    default_value: f64,
+    calorias_por_unidade: f64,
+    proteina_por_unidade: f64,
+    gordura_por_unidade: f64,
+    carboidrato_por_unidade: f64
+) -> Result<(), String> {
+    let db_path = get_db_path();
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    
+    let mut stmt = conn.prepare(
+        "UPDATE alimento SET nome = ?1, categoria_id = ?2, unidade = ?3, default_value = ?4, calorias_por_unidade = ?5, proteina_por_unidade = ?6, gordura_por_unidade = ?7, carboidrato_por_unidade = ?8, updated_at = CURRENT_TIMESTAMP WHERE id = ?9"
+    ).map_err(|e| e.to_string())?;
+    
+    stmt.execute(rusqlite::params![
+        nome, categoria_id, unidade, default_value, calorias_por_unidade, proteina_por_unidade, gordura_por_unidade, carboidrato_por_unidade, id
+    ]).map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
+
+#[tauri::command]
+fn deletar_alimento(id: i64) -> Result<(), String> {
+    let db_path = get_db_path();
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    
+    let mut stmt = conn.prepare(
+        "UPDATE alimento SET ativo = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?1"
+    ).map_err(|e| e.to_string())?;
+    
+    stmt.execute([id]).map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -841,7 +910,10 @@ pub fn run() {
             adicionar_alimento_refeicao,
             get_alimentos_refeicao,
             criar_meta_nutricional,
-            get_meta_ativa_usuario
+            get_meta_ativa_usuario,
+            criar_alimento,
+            editar_alimento,
+            deletar_alimento
         ])
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
