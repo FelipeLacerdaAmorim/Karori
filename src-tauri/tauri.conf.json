@@ -29,6 +29,11 @@
       "csp": null
     }
   },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:karori_v2.db"]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

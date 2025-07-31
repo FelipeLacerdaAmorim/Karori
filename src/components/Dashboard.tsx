@@ -1,5 +1,5 @@
 import { DayData } from '../types';
-import { Weight, Activity, Target, PieChart, BarChart3, ChevronRight, Scale, Ruler, Flame } from 'lucide-react';
+import { ChevronRight, Scale, Ruler, Flame } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface DashboardProps {

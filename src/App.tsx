@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { Menu, Search, Bell, User, Home, Calendar, TrendingUp, Settings } from 'lucide-react'
+import { Menu, Search, Bell, User, Home, Calendar, Utensils, Settings } from 'lucide-react'
 import './App.css'
 import { Dashboard } from './components/Dashboard'
 import { DayDetail } from './components/DayDetail'
+import { Foods } from './components/foods'
+import { Calendar as CalendarComponent } from './components/Calendar'
+import { Settings as SettingsComponent } from './components/Settings'
 import { DayData } from './types'
 
 function App() {
@@ -35,7 +38,18 @@ function App() {
       )
     }
     
-    return <Dashboard onDayClick={handleDayClick} />
+    switch (activeNav) {
+      case 'dashboard':
+        return <Dashboard onDayClick={handleDayClick} />
+      case 'calendar':
+        return <CalendarComponent />
+      case 'foods':
+        return <Foods />
+      case 'settings':
+        return <SettingsComponent />
+      default:
+        return <Dashboard onDayClick={handleDayClick} />
+    }
   }
 
   return (
@@ -79,41 +93,34 @@ function App() {
         {/* Sidebar */}
         <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <nav className="sidebar-nav">
-            <button 
-              className={`nav-item ${activeNav === 'dashboard' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveNav('dashboard')
-                setShowDayDetail(false)
-                setSelectedDay(null)
-              }}
-            >
-              <Home size={24} />
-              <span>Dashboard</span>
-            </button>
-            
-            <button 
-              className={`nav-item ${activeNav === 'calendar' ? 'active' : ''}`}
-              onClick={() => setActiveNav('calendar')}
-            >
-              <Calendar size={24} />
-              <span>Calendário</span>
-            </button>
-            
-            <button 
-              className={`nav-item ${activeNav === 'progress' ? 'active' : ''}`}
-              onClick={() => setActiveNav('progress')}
-            >
-              <TrendingUp size={24} />
-              <span>Progresso</span>
-            </button>
-            
-            <button 
-              className={`nav-item ${activeNav === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveNav('settings')}
-            >
-              <Settings size={24} />
-              <span>Configurações</span>
-            </button>
+            <div className="nav-main">
+              <div className="nav-item" 
+                   onClick={() => setActiveNav('dashboard')}
+                   data-active={activeNav === 'dashboard'}>
+                <Home size={20} />
+                <span>Dashboard</span>
+              </div>
+              <div className="nav-item" 
+                   onClick={() => setActiveNav('calendar')}
+                   data-active={activeNav === 'calendar'}>
+                <Calendar size={20} />
+                <span>Calendário</span>
+              </div>
+              <div className="nav-item" 
+                   onClick={() => setActiveNav('foods')}
+                   data-active={activeNav === 'foods'}>
+                <Utensils size={20} />
+                <span>Alimentos</span>
+              </div>
+            </div>
+            <div className="nav-bottom">
+              <div className="nav-item" 
+                   onClick={() => setActiveNav('settings')}
+                   data-active={activeNav === 'settings'}>
+                <Settings size={20} />
+                <span>Configurações</span>
+              </div>
+            </div>
           </nav>
         </aside>
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, ArrowLeft, Search, Info } from 'lucide-react';
+import { X, ArrowLeft, Search } from 'lucide-react';
 import { Food, FoodDatabase } from '../types';
 
 interface FoodSelectorProps {
